@@ -86,9 +86,14 @@ void AuxGlobalPosition::update(Ekf &ekf, const estimator::imuSample &imu_delayed
 					  sample.time_us,                                    // sample timestamp
 					  Vector2f(sample.latitude, sample.longitude),       // observation //TODO: warning float
 					  pos_obs_var,                                       // observation variance
-					  innovation,              // innovation
+					  innovation,                                        // innovation
 					  Vector2f(ekf.getPositionVariance()) + pos_obs_var, // innovation variance
 					  math::max(_param_ekf2_agp_gate.get(), 1.f));       // innovation gate
+
+		// Override float lat/lon to get double precision
+		// TODO: fix updateAidSourceStatus to accept double precision observations
+		aid_src.observation[0] = sample.latitude;
+		aid_src.observation[1] = sample.longitude;
 
 		const bool starting_conditions = PX4_ISFINITE(sample.latitude) && PX4_ISFINITE(sample.longitude)
 						 && ekf.control_status_flags().yaw_align;
