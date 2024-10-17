@@ -107,6 +107,7 @@ void Ekf::controlGpsFusion(const imuSample &imu_delayed)
 				&& _control_status.flags.tilt_align
 				&& _control_status.flags.yaw_align;
 		const bool starting_conditions_passing = continuing_conditions_passing && _gps_checks_passed;
+		const bool gpos_init_conditions_passing = gnss_pos_enabled && _gps_checks_passed;
 
 		if (_control_status.flags.gps) {
 			if (continuing_conditions_passing) {
@@ -165,14 +166,14 @@ void Ekf::controlGpsFusion(const imuSample &imu_delayed)
 					}
 				}
 
-				if (gnss_pos_enabled && (_aid_src_gnss_pos.innovation_rejected || !_pos_ref.isInitialized())) {
+				if (gnss_pos_enabled) {
 					resetHorizontalPositionToGnss(_aid_src_gnss_pos);
-
-				} else {
-					fuseHorizontalPosition(_aid_src_gnss_pos);
 				}
 
 				_control_status.flags.gps = true;
+
+			} else if (gpos_init_conditions_passing && !_pos_ref.isInitialized()) {
+				resetHorizontalPositionToGnss(_aid_src_gnss_pos);
 			}
 		}
 	}
@@ -329,7 +330,7 @@ void Ekf::resetHorizontalPositionToGnss(estimator_aid_source2d_s &aid_src)
 	_information_events.flags.reset_pos_to_gps = true;
 	setLatLonOriginFromCurrentPos(aid_src.observation[0], aid_src.observation[1],
 				      sqrtf(aid_src.observation_variance[0] +
-					    aid_src.observation_variance[1]));//TODO: fix pos offset,  double precision and variance
+					    aid_src.observation_variance[1]));//TODO: fix pos offset and variance
 
 	resetAidSourceStatusZeroInnovation(aid_src);
 }
