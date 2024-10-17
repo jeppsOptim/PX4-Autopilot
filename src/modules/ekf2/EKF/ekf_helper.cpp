@@ -748,11 +748,12 @@ void Ekf::fuse(const VectorState &K, float innovation)
 	_state.vel = matrix::constrain(_state.vel - K.slice<State::vel.dof, 1>(State::vel.idx, 0) * innovation, -1.e3f, 1.e3f);
 
 	// pos
-	_state.pos = matrix::constrain(_state.pos - K.slice<State::pos.dof, 1>(State::pos.idx, 0) * innovation, -1.e6f, 1.e6f);
+	const Vector3f pos_correction = K.slice<State::pos.dof, 1>(State::pos.idx, 0) * (-innovation);
 
 	// Accumulate position in global coordinates
-	_gpos += _state.pos;
+	_gpos += pos_correction;
 	_state.pos.zero();
+	_state.pos(2) = -_gpos.altitude();
 
 	// gyro_bias
 	_state.gyro_bias = matrix::constrain(_state.gyro_bias - K.slice<State::gyro_bias.dof, 1>(State::gyro_bias.idx,

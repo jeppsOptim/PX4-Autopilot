@@ -259,6 +259,7 @@ void Ekf::predictState(const imuSample &imu_delayed)
 
 	// predict position states via trapezoidal integration of velocity
 	_gpos += (vel_last + _state.vel) * imu_delayed.delta_vel_dt * 0.5f;
+	_state.pos(2) = -_gpos.altitude();
 
 	// constrain states
 	_state.vel = matrix::constrain(_state.vel, -_params.velocity_limit, _params.velocity_limit);
