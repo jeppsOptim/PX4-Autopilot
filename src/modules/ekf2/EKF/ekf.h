@@ -641,11 +641,11 @@ private:
 		P.slice<S.dof, S.dof>(S.idx, S.idx) = cov;
 	}
 
-	bool setLatLonOrigin(double latitude, double longitude, float eph = NAN);
-	bool setAltOrigin(float altitude, float epv = NAN);
+	bool setLatLonOrigin(double latitude, double longitude, float hpos_var = NAN);
+	bool setAltOrigin(float altitude, float vpos_var = NAN);
 
-	bool setLatLonOriginFromCurrentPos(double latitude, double longitude, float eph = NAN);
-	bool setAltOriginFromCurrentPos(float altitude, float epv = NAN);
+	bool setLatLonOriginFromCurrentPos(double latitude, double longitude, float hpos_var = NAN);
+	bool setAltOriginFromCurrentPos(float altitude, float vpos_var = NAN);
 
 	// update quaternion states and covariances using an innovation, observation variance and Jacobian vector
 	bool fuseYaw(estimator_aid_source1d_s &aid_src_status, const VectorState &H_YAW);

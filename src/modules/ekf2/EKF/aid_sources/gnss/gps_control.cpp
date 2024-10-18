@@ -329,8 +329,8 @@ void Ekf::resetHorizontalPositionToGnss(estimator_aid_source2d_s &aid_src)
 {
 	_information_events.flags.reset_pos_to_gps = true;
 	setLatLonOriginFromCurrentPos(aid_src.observation[0], aid_src.observation[1],
-				      sqrtf(aid_src.observation_variance[0] +
-					    aid_src.observation_variance[1]));//TODO: fix pos offset and variance
+				      aid_src.observation_variance[0] +
+				      aid_src.observation_variance[1]);//TODO: fix pos offset
 
 	resetAidSourceStatusZeroInnovation(aid_src);
 }

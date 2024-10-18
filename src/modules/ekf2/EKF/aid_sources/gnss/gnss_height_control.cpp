@@ -129,7 +129,7 @@ void Ekf::controlGnssHeightFusion(const gnssSample &gps_sample)
 
 					_information_events.flags.reset_hgt_to_gps = true;
 
-					setAltOriginFromCurrentPos(measurement, sqrtf(measurement_var)); //TODO: convert to var param
+					setAltOriginFromCurrentPos(measurement, measurement_var);
 					_gpos_origin_epv = 0.f; // The uncertainty of the global origin is now contained in the local position uncertainty
 					bias_est.reset();
 

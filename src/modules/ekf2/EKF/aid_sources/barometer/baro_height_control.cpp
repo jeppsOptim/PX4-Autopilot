@@ -163,7 +163,7 @@ void Ekf::controlBaroHeightFusion(const imuSample &imu_sample)
 					_height_sensor_ref = HeightSensor::BARO;
 
 					_information_events.flags.reset_hgt_to_baro = true;
-					setAltOriginFromCurrentPos(measurement, sqrtf(measurement_var)); //TODO: convert to var param
+					setAltOriginFromCurrentPos(measurement, measurement_var);
 					bias_est.reset();
 
 				} else {

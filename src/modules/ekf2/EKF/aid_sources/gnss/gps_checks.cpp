@@ -58,14 +58,6 @@
 void Ekf::collect_gps(const gnssSample &gps)
 {
 	if (_filter_initialised && !_pos_ref.isInitialized() && _gps_checks_passed) {
-		// If we have good GPS data set the origin's WGS-84 position to the last gps fix
-		// setLatLonOriginFromCurrentPos(gps.lat, gps.lon, gps.hacc);
-
-		// Take the current GPS height and subtract the filter height above origin to estimate the GPS height of the origin
-		// if (!PX4_ISFINITE(_gps_alt_ref)) {
-		// 	setAltOriginFromCurrentPos(gps.alt, gps.vacc);
-		// }
-
 		_information_events.flags.gps_checks_passed = true;
 
 	} else {

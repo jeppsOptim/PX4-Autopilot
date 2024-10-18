@@ -85,20 +85,20 @@ bool Ekf::checkAltitudeValidity(const float altitude)
 	return (PX4_ISFINITE(altitude) && ((altitude > -12'000.f) && (altitude < 100'000.f)));
 }
 
-bool Ekf::setEkfGlobalOrigin(const double latitude, const double longitude, const float altitude, const float eph,
-			     const float epv)
+bool Ekf::setEkfGlobalOrigin(const double latitude, const double longitude, const float altitude, const float hpos_var,
+			     const float vpos_var)
 {
-	if (!setLatLonOrigin(latitude, longitude, eph)) {
+	if (!setLatLonOrigin(latitude, longitude, hpos_var)) {
 		return false;
 	}
 
 	// altitude is optional
-	setAltOrigin(altitude, epv);
+	setAltOrigin(altitude, vpos_var);
 
 	return true;
 }
 
-bool Ekf::setLatLonOrigin(const double latitude, const double longitude, const float eph)
+bool Ekf::setLatLonOrigin(const double latitude, const double longitude, const float hpos_var)
 {
 	if (!checkLatLonValidity(latitude, longitude)) {
 		return false;
@@ -117,8 +117,8 @@ bool Ekf::setLatLonOrigin(const double latitude, const double longitude, const f
 	// reinitialize map projection to latitude, longitude, altitude, and reset position
 	_pos_ref.initReference(latitude, longitude, _time_delayed_us);
 
-	if (PX4_ISFINITE(eph) && (eph >= 0.f)) {
-		_gpos_origin_eph = eph;
+	if (PX4_ISFINITE(hpos_var) && (hpos_var >= 0.f)) {
+		_gpos_origin_eph = sqrtf(hpos_var);
 	}
 
 	// if (current_pos_available) {
@@ -130,7 +130,7 @@ bool Ekf::setLatLonOrigin(const double latitude, const double longitude, const f
 	return true;
 }
 
-bool Ekf::setAltOrigin(const float altitude, const float epv)
+bool Ekf::setAltOrigin(const float altitude, const float vpos_var)
 {
 	if (!checkAltitudeValidity(altitude)) {
 		return false;
@@ -148,8 +148,8 @@ bool Ekf::setAltOrigin(const float altitude, const float epv)
 	_gps_alt_ref = altitude;
 	//TODO: lpos reset counter
 
-	if (PX4_ISFINITE(epv) && (epv >= 0.f)) {
-		_gpos_origin_epv = epv;
+	if (PX4_ISFINITE(vpos_var) && (vpos_var >= 0.f)) {
+		_gpos_origin_epv = sqrtf(vpos_var);
 	}
 
 	if (PX4_ISFINITE(local_alt_prev)) {
@@ -161,19 +161,19 @@ bool Ekf::setAltOrigin(const float altitude, const float epv)
 }
 
 bool Ekf::setEkfGlobalOriginFromCurrentPos(const double latitude, const double longitude, const float altitude,
-		const float eph, const float epv)
+		const float hpos_var, const float vpos_var)
 {
-	if (!setLatLonOriginFromCurrentPos(latitude, longitude, eph)) {
+	if (!setLatLonOriginFromCurrentPos(latitude, longitude, hpos_var)) {
 		return false;
 	}
 
 	// altitude is optional
-	setAltOriginFromCurrentPos(altitude, epv);
+	setAltOriginFromCurrentPos(altitude, vpos_var);
 
 	return true;
 }
 
-bool Ekf::setLatLonOriginFromCurrentPos(const double latitude, const double longitude, const float eph)
+bool Ekf::setLatLonOriginFromCurrentPos(const double latitude, const double longitude, const float hpos_var)
 {
 	if (!checkLatLonValidity(latitude, longitude)) {
 		return false;
@@ -198,16 +198,16 @@ bool Ekf::setLatLonOriginFromCurrentPos(const double latitude, const double long
 			 _pos_ref.getProjectionReferenceLat(), _pos_ref.getProjectionReferenceLon());
 	}
 
-	resetHorizontalPositionTo(latitude, longitude, sq(eph));
+	resetHorizontalPositionTo(latitude, longitude, hpos_var);
 
-	if (PX4_ISFINITE(eph) && (eph >= 0.f)) { //TODO: this should be gpos eph
-		_gpos_origin_eph = eph;
+	if (PX4_ISFINITE(hpos_var) && (hpos_var >= 0.f)) { //TODO: this should be gpos eph
+		_gpos_origin_eph = sqrtf(hpos_var);
 	}
 
 	return true;
 }
 
-bool Ekf::setAltOriginFromCurrentPos(const float altitude, const float epv)
+bool Ekf::setAltOriginFromCurrentPos(const float altitude, const float vpos_var)
 {
 	if (!checkAltitudeValidity(altitude)) {
 		return false;
@@ -226,10 +226,10 @@ bool Ekf::setAltOriginFromCurrentPos(const float altitude, const float epv)
 		ECL_INFO("Origin alt=%.3f", (double)_gps_alt_ref);
 	}
 
-	resetAltitudeTo(altitude, sq(epv));
+	resetAltitudeTo(altitude, vpos_var);
 
-	if (PX4_ISFINITE(epv) && (epv >= 0.f)) {
-		_gpos_origin_epv = epv;
+	if (PX4_ISFINITE(vpos_var) && (vpos_var >= 0.f)) {
+		_gpos_origin_epv = sqrtf(vpos_var);
 	}
 
 	return true;

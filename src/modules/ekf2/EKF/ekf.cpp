@@ -284,12 +284,12 @@ bool Ekf::resetGlobalPosToExternalObservation(const double latitude, const doubl
 	}
 
 	if (!_pos_ref.isInitialized()) {
-		if (!setLatLonOriginFromCurrentPos(latitude, longitude, eph)) {
+		if (!setLatLonOriginFromCurrentPos(latitude, longitude, sq(eph))) {
 			return false;
 		}
 
 		if (!PX4_ISFINITE(_gps_alt_ref)) {
-			setAltOriginFromCurrentPos(altitude, epv);
+			setAltOriginFromCurrentPos(altitude, sq(epv));
 		}
 
 		return true;
@@ -356,7 +356,7 @@ bool Ekf::resetGlobalPosToExternalObservation(const double latitude, const doubl
 		const float altitude_corrected = altitude - pos_correction(2);
 
 		if (!PX4_ISFINITE(_gps_alt_ref)) {
-			setAltOriginFromCurrentPos(altitude_corrected, epv);
+			setAltOriginFromCurrentPos(altitude_corrected, sq(epv));
 
 		} else {
 			const float obs_var = math::max(sq(epv), sq(0.01f));
