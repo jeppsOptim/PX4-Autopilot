@@ -99,6 +99,7 @@ void Ekf::resetHorizontalPositionTo(const double &new_latitude, const double &ne
 	const LatLonAlt new_gpos(new_latitude, new_longitude, _gpos.altitude());
 	const Vector2f delta_horz_pos = (new_gpos - _gpos).xy();
 	_gpos = new_gpos;
+	_output_predictor.resetLatLonTo(new_latitude, new_longitude);
 
 	if (PX4_ISFINITE(new_horz_pos_var(0))) {
 		P.uncorrelateCovarianceSetVariance<1>(State::pos.idx, math::max(sq(0.01f), new_horz_pos_var(0)));
@@ -107,8 +108,6 @@ void Ekf::resetHorizontalPositionTo(const double &new_latitude, const double &ne
 	if (PX4_ISFINITE(new_horz_pos_var(1))) {
 		P.uncorrelateCovarianceSetVariance<1>(State::pos.idx + 1, math::max(sq(0.01f), new_horz_pos_var(1)));
 	}
-
-	_output_predictor.resetLatLonTo(new_latitude, new_longitude);
 
 	// record the state change
 	if (_state_reset_status.reset_count.posNE == _state_reset_count_prev.posNE) {
@@ -128,6 +127,24 @@ void Ekf::resetHorizontalPositionTo(const double &new_latitude, const double &ne
 
 	// Reset the timout timer
 	_time_last_hor_pos_fuse = _time_delayed_us;
+}
+
+void Ekf::resetHorizontalPositionTo(const Vector2f &new_pos,
+				    const Vector2f &new_horz_pos_var)
+{
+	double new_latitude;
+	double new_longitude;
+
+	if (_pos_ref.isInitialized()) {
+		_pos_ref.reproject(new_pos(0), new_pos(1), new_latitude, new_longitude);
+
+	} else {
+		MapProjection zero_ref;
+		zero_ref.initReference(0.0, 0.0);
+		zero_ref.reproject(new_pos(0), new_pos(1), new_latitude, new_longitude);
+	}
+
+	resetHorizontalPositionTo(new_latitude, new_longitude, new_horz_pos_var);
 }
 
 void Ekf::resetAltitudeTo(const float new_altitude, float new_vert_pos_var)
@@ -188,9 +205,11 @@ void Ekf::resetAltitudeTo(const float new_altitude, float new_vert_pos_var)
 
 void Ekf::resetHorizontalPositionToLastKnown()
 {
-	ECL_INFO("reset position to last known (%.3f, %.3f)", (double)_last_known_gpos.latitude_deg(), (double)_last_known_gpos.longitude_deg());
+	ECL_INFO("reset position to last known (%.3f, %.3f)", (double)_last_known_gpos.latitude_deg(),
+		 (double)_last_known_gpos.longitude_deg());
 	_information_events.flags.reset_pos_to_last_known = true;
 
 	// Used when falling back to non-aiding mode of operation
-	resetHorizontalPositionTo(_last_known_gpos.latitude_deg(), _last_known_gpos.longitude_deg(), sq(_params.pos_noaid_noise));
+	resetHorizontalPositionTo(_last_known_gpos.latitude_deg(), _last_known_gpos.longitude_deg(),
+				  sq(_params.pos_noaid_noise));
 }

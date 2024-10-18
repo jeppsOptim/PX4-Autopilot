@@ -710,6 +710,7 @@ private:
 	void resetHorizontalPositionTo(const double &new_latitude, const double &new_longitude,
 				       const Vector2f &new_horz_pos_var);
 	void resetHorizontalPositionTo(const double &new_latitude, const double &new_longitude, const float pos_var = NAN) { resetHorizontalPositionTo(new_latitude, new_longitude, Vector2f(pos_var, pos_var)); }
+	void resetHorizontalPositionTo(const Vector2f &new_pos, const Vector2f &new_horz_pos_var);
 
 	void resetWindTo(const Vector2f &wind, const Vector2f &wind_var);
 
@@ -829,6 +830,8 @@ private:
 	void startEvPosFusion(const Vector2f &measurement, const Vector2f &measurement_var, estimator_aid_source2d_s &aid_src);
 	void updateEvPosFusion(const Vector2f &measurement, const Vector2f &measurement_var, bool quality_sufficient,
 			       bool reset, estimator_aid_source2d_s &aid_src);
+
+	Vector2f getLocalHorizontalPosition();
 	void stopEvPosFusion();
 	void stopEvHgtFusion();
 	void stopEvVelFusion();
