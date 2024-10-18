@@ -96,9 +96,16 @@ bool Ekf::fuseVerticalPosition(estimator_aid_source1d_s &aid_src)
 void Ekf::resetHorizontalPositionTo(const double &new_latitude, const double &new_longitude,
 				    const Vector2f &new_horz_pos_var)
 {
-	const LatLonAlt new_gpos(new_latitude, new_longitude, _gpos.altitude());
-	const Vector2f delta_horz_pos = (new_gpos - _gpos).xy();
-	_gpos = new_gpos;
+	const Vector2f delta_horz_pos = computeDeltaHorizontalPosition(new_latitude, new_longitude);
+
+	updateHorizontalPositionResetStatus(delta_horz_pos);
+
+#if defined(CONFIG_EKF2_EXTERNAL_VISION)
+	_ev_pos_b_est.setBias(_ev_pos_b_est.getBias() - delta_horz_pos);
+#endif // CONFIG_EKF2_EXTERNAL_VISION
+	//_gps_pos_b_est.setBias(_gps_pos_b_est.getBias() + _state_reset_status.posNE_change);
+
+	_gpos.setLatLonDeg(new_latitude, new_longitude);
 	_output_predictor.resetLatLonTo(new_latitude, new_longitude);
 
 	if (PX4_ISFINITE(new_horz_pos_var(0))) {
@@ -109,24 +116,52 @@ void Ekf::resetHorizontalPositionTo(const double &new_latitude, const double &ne
 		P.uncorrelateCovarianceSetVariance<1>(State::pos.idx + 1, math::max(sq(0.01f), new_horz_pos_var(1)));
 	}
 
-	// record the state change
+	// Reset the timout timer
+	_time_last_hor_pos_fuse = _time_delayed_us;
+}
+
+Vector2f Ekf::computeDeltaHorizontalPosition(const double &new_latitude, const double &new_longitude) const
+{
+	Vector2f pos;
+	Vector2f pos_new;
+
+	if (_local_origin_lat_lon.isInitialized()) {
+		_local_origin_lat_lon.project(_gpos.latitude_deg(), _gpos.longitude_deg(), pos(0), pos(1));
+		_local_origin_lat_lon.project(new_latitude, new_longitude, pos_new(0), pos_new(1));
+
+	} else {
+		MapProjection zero_ref;
+		zero_ref.initReference(0.0, 0.0);
+		zero_ref.project(_gpos.latitude_deg(), _gpos.longitude_deg(), pos(0), pos(1));
+		zero_ref.project(new_latitude, new_longitude, pos_new(0), pos_new(1));
+	}
+
+	return pos_new - pos;
+}
+
+Vector2f Ekf::getLocalHorizontalPosition() const
+{
+	if (_local_origin_lat_lon.isInitialized()) {
+		return _local_origin_lat_lon.project(_gpos.latitude_deg(), _gpos.longitude_deg());
+
+	} else {
+		MapProjection zero_ref;
+		zero_ref.initReference(0.0, 0.0);
+		return zero_ref.project(_gpos.latitude_deg(), _gpos.longitude_deg());
+	}
+}
+
+void Ekf::updateHorizontalPositionResetStatus(const Vector2f &delta)
+{
 	if (_state_reset_status.reset_count.posNE == _state_reset_count_prev.posNE) {
-		_state_reset_status.posNE_change = delta_horz_pos;
+		_state_reset_status.posNE_change = delta;
 
 	} else {
 		// there's already a reset this update, accumulate total delta
-		_state_reset_status.posNE_change += delta_horz_pos;
+		_state_reset_status.posNE_change += delta;
 	}
 
 	_state_reset_status.reset_count.posNE++;
-
-#if defined(CONFIG_EKF2_EXTERNAL_VISION)
-	_ev_pos_b_est.setBias(_ev_pos_b_est.getBias() - _state_reset_status.posNE_change);
-#endif // CONFIG_EKF2_EXTERNAL_VISION
-	//_gps_pos_b_est.setBias(_gps_pos_b_est.getBias() + _state_reset_status.posNE_change);
-
-	// Reset the timout timer
-	_time_last_hor_pos_fuse = _time_delayed_us;
 }
 
 void Ekf::resetHorizontalPositionTo(const Vector2f &new_pos,
@@ -135,8 +170,8 @@ void Ekf::resetHorizontalPositionTo(const Vector2f &new_pos,
 	double new_latitude;
 	double new_longitude;
 
-	if (_pos_ref.isInitialized()) {
-		_pos_ref.reproject(new_pos(0), new_pos(1), new_latitude, new_longitude);
+	if (_local_origin_lat_lon.isInitialized()) {
+		_local_origin_lat_lon.reproject(new_pos(0), new_pos(1), new_latitude, new_longitude);
 
 	} else {
 		MapProjection zero_ref;

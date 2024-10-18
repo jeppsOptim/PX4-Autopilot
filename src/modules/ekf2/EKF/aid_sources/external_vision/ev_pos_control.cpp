@@ -208,18 +208,6 @@ void Ekf::controlEvPosFusion(const imuSample &imu_sample, const extVisionSample 
 	}
 }
 
-Vector2f Ekf::getLocalHorizontalPosition()
-{
-	if (_pos_ref.isInitialized()) {
-		return _pos_ref.project(_gpos.latitude_deg(), _gpos.longitude_deg());
-
-	} else {
-		MapProjection zero_ref;
-		zero_ref.initReference(0.0, 0.0);
-		return zero_ref.project(_gpos.latitude_deg(), _gpos.longitude_deg());
-	}
-}
-
 void Ekf::startEvPosFusion(const Vector2f &measurement, const Vector2f &measurement_var,
 			   estimator_aid_source2d_s &aid_src)
 {

@@ -172,7 +172,7 @@ void Ekf::controlGpsFusion(const imuSample &imu_delayed)
 
 				_control_status.flags.gps = true;
 
-			} else if (gpos_init_conditions_passing && !_pos_ref.isInitialized()) {
+			} else if (gpos_init_conditions_passing && !_local_origin_lat_lon.isInitialized()) {
 				resetHorizontalPositionToGnss(_aid_src_gnss_pos);
 			}
 		}

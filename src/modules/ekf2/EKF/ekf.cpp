@@ -97,7 +97,7 @@ void Ekf::reset()
 	resetGpsDriftCheckFilters();
 	_gps_checks_passed = false;
 #endif // CONFIG_EKF2_GNSS
-	_gps_alt_ref = NAN;
+	_local_origin_alt = NAN;
 
 	_output_predictor.reset();
 
@@ -283,12 +283,12 @@ bool Ekf::resetGlobalPosToExternalObservation(const double latitude, const doubl
 		return false;
 	}
 
-	if (!_pos_ref.isInitialized()) {
+	if (!_local_origin_lat_lon.isInitialized()) {
 		if (!setLatLonOriginFromCurrentPos(latitude, longitude, sq(eph))) {
 			return false;
 		}
 
-		if (!PX4_ISFINITE(_gps_alt_ref)) {
+		if (!PX4_ISFINITE(_local_origin_alt)) {
 			setAltOriginFromCurrentPos(altitude, sq(epv));
 		}
 
@@ -355,7 +355,7 @@ bool Ekf::resetGlobalPosToExternalObservation(const double latitude, const doubl
 	if (checkAltitudeValidity(altitude)) {
 		const float altitude_corrected = altitude - pos_correction(2);
 
-		if (!PX4_ISFINITE(_gps_alt_ref)) {
+		if (!PX4_ISFINITE(_local_origin_alt)) {
 			setAltOriginFromCurrentPos(altitude_corrected, sq(epv));
 
 		} else {

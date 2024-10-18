@@ -248,8 +248,8 @@ public:
 		float x;
 		float y;
 
-		if (_pos_ref.isInitialized()) {
-			_pos_ref.project(lla.latitude_deg(), lla.longitude_deg(), x, y);
+		if (_local_origin_lat_lon.isInitialized()) {
+			_local_origin_lat_lon.project(lla.latitude_deg(), lla.longitude_deg(), x, y);
 
 		} else {
 			MapProjection zero_ref;
@@ -327,9 +327,9 @@ public:
 	const imuSample &get_imu_sample_delayed() const { return _imu_buffer.get_oldest(); }
 	const uint64_t &time_delayed_us() const { return _time_delayed_us; }
 
-	bool global_origin_valid() const { return _pos_ref.isInitialized(); }
-	const MapProjection &global_origin() const { return _pos_ref; }
-	float getEkfGlobalOriginAltitude() const { return PX4_ISFINITE(_gps_alt_ref) ? _gps_alt_ref : 0.f; }
+	bool global_origin_valid() const { return _local_origin_lat_lon.isInitialized(); }
+	const MapProjection &global_origin() const { return _local_origin_lat_lon; }
+	float getEkfGlobalOriginAltitude() const { return PX4_ISFINITE(_local_origin_alt) ? _local_origin_alt : 0.f; }
 
 	OutputPredictor &output_predictor() { return _output_predictor; };
 
@@ -399,10 +399,8 @@ protected:
 	bool _initialised{false};      // true if the ekf interface instance (data buffering) is initialized
 
 	// Variables used to publish the WGS-84 location of the EKF local NED origin
-	MapProjection _pos_ref{}; // Contains WGS-84 position latitude and longitude of the EKF origin
-	float _gps_alt_ref{NAN};		///< WGS-84 height (m)
-	float _gpos_origin_eph{0.0f}; // horizontal position uncertainty of the global origin
-	float _gpos_origin_epv{0.0f}; // vertical position uncertainty of the global origin
+	MapProjection _local_origin_lat_lon{};
+	float _local_origin_alt{NAN};
 
 #if defined(CONFIG_EKF2_GNSS)
 	RingBuffer<gnssSample> *_gps_buffer {nullptr};

@@ -87,7 +87,7 @@ void Ekf::controlGnssHeightFusion(const gnssSample &gps_sample)
 		// determine if we should use height aiding
 		const bool continuing_conditions_passing = (_params.gnss_ctrl & static_cast<int32_t>(GnssCtrl::VPOS))
 				&& measurement_valid
-				&& _pos_ref.isInitialized()
+				&& _local_origin_lat_lon.isInitialized()
 				&& _gps_checks_passed;
 
 		const bool starting_conditions_passing = continuing_conditions_passing
@@ -130,7 +130,6 @@ void Ekf::controlGnssHeightFusion(const gnssSample &gps_sample)
 					_information_events.flags.reset_hgt_to_gps = true;
 
 					setAltOriginFromCurrentPos(measurement, measurement_var);
-					_gpos_origin_epv = 0.f; // The uncertainty of the global origin is now contained in the local position uncertainty
 					bias_est.reset();
 
 				} else {
