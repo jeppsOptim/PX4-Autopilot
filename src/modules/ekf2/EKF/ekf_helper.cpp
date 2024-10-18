@@ -141,29 +141,31 @@ bool Ekf::setAltOrigin(const float altitude, const float vpos_var)
 	return true;
 }
 
-bool Ekf::setEkfGlobalOriginFromCurrentPos(const double latitude, const double longitude, const float altitude,
+bool Ekf::resetGlobalPositionTo(const double latitude, const double longitude, const float altitude,
 		const float hpos_var, const float vpos_var)
 {
-	if (!setLatLonOriginFromCurrentPos(latitude, longitude, hpos_var)) {
+	if (!resetLatLonTo(latitude, longitude, hpos_var)) {
 		return false;
 	}
 
 	// altitude is optional
-	setAltOriginFromCurrentPos(altitude, vpos_var);
+	resetAltitudeTo(altitude, vpos_var);
 
 	return true;
 }
 
-bool Ekf::setLatLonOriginFromCurrentPos(const double latitude, const double longitude, const float hpos_var)
+bool Ekf::resetLatLonTo(const double latitude, const double longitude, const float hpos_var)
 {
 	if (!checkLatLonValidity(latitude, longitude)) {
 		return false;
 	}
 
+	const Vector2f pos_prev;
+
 	if (!_local_origin_lat_lon.isInitialized()) {
 		MapProjection zero_ref;
 		zero_ref.initReference(0.0, 0.0);
-		const Vector2f pos_prev = zero_ref.project(_gpos.latitude_deg(), _gpos.longitude_deg());
+		pos_prev = zero_ref.project(_gpos.latitude_deg(), _gpos.longitude_deg());
 
 		_local_origin_lat_lon.initReference(latitude, longitude, _time_delayed_us);
 
@@ -177,10 +179,15 @@ bool Ekf::setLatLonOriginFromCurrentPos(const double latitude, const double long
 
 		ECL_INFO("Origin set to lat=%.6f, lon=%.6f",
 			 _local_origin_lat_lon.getProjectionReferenceLat(), _local_origin_lat_lon.getProjectionReferenceLon());
+
+	} else {
+		pos_prev = _local_origin_lat_lon.project(_gpos.latitude_deg(), _gpos.longitude_deg());
 	}
 
 	_gpos.setLatLonDeg(latitude, longitude);
 	_output_predictor.resetLatLonTo(latitude, longitude);
+
+	updateHorizontalPositionResetStatus(getLocalHorizontalPosition() - pos_prev);
 
 	if (PX4_ISFINITE(hpos_var)) {
 		P.uncorrelateCovarianceSetVariance<2>(State::pos.idx, math::max(sq(0.01f), hpos_var));
@@ -192,7 +199,7 @@ bool Ekf::setLatLonOriginFromCurrentPos(const double latitude, const double long
 	return true;
 }
 
-bool Ekf::setAltOriginFromCurrentPos(const float altitude, const float vpos_var)
+bool Ekf::resetAltitudeTo(const float altitude, const float vpos_var)
 {
 	if (!checkAltitudeValidity(altitude)) {
 		return false;
@@ -211,7 +218,7 @@ bool Ekf::setAltOriginFromCurrentPos(const float altitude, const float vpos_var)
 		ECL_INFO("Origin alt=%.3f", (double)_local_origin_alt);
 	}
 
-	resetAltitudeTo(altitude, vpos_var);
+	resetAltitudeTo(altitude, vpos_var);//TODO: disambiguate with vertical pos reset
 
 	return true;
 }

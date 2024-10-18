@@ -328,7 +328,7 @@ void Ekf::resetVelocityToGnss(estimator_aid_source3d_s &aid_src)
 void Ekf::resetHorizontalPositionToGnss(estimator_aid_source2d_s &aid_src)
 {
 	_information_events.flags.reset_pos_to_gps = true;
-	setLatLonOriginFromCurrentPos(aid_src.observation[0], aid_src.observation[1],
+	resetLatLonTo(aid_src.observation[0], aid_src.observation[1],
 				      aid_src.observation_variance[0] +
 				      aid_src.observation_variance[1]);//TODO: fix pos offset
 

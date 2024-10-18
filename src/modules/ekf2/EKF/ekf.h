@@ -194,7 +194,7 @@ public:
 	bool checkLatLonValidity(double latitude, double longitude);
 	bool checkAltitudeValidity(float altitude);
 	bool setEkfGlobalOrigin(double latitude, double longitude, float altitude, float eph = NAN, float epv = NAN);
-	bool setEkfGlobalOriginFromCurrentPos(double latitude, double longitude, float altitude, float eph = NAN,
+	bool resetGlobalPositionTo(double latitude, double longitude, float altitude, float eph = NAN,
 					      float epv = NAN);
 
 	// get the 1-sigma horizontal and vertical position uncertainty of the ekf WGS-84 position
@@ -644,8 +644,8 @@ private:
 	bool setLatLonOrigin(double latitude, double longitude, float hpos_var = NAN);
 	bool setAltOrigin(float altitude, float vpos_var = NAN);
 
-	bool setLatLonOriginFromCurrentPos(double latitude, double longitude, float hpos_var = NAN);
-	bool setAltOriginFromCurrentPos(float altitude, float vpos_var = NAN);
+	bool resetLatLonTo(double latitude, double longitude, float hpos_var = NAN);
+	bool resetAltitudeTo(float altitude, float vpos_var = NAN);
 
 	// update quaternion states and covariances using an innovation, observation variance and Jacobian vector
 	bool fuseYaw(estimator_aid_source1d_s &aid_src_status, const VectorState &H_YAW);
